@@ -52,6 +52,7 @@ public class Controller {
     @GetMapping("/tasks/date")
     public ResponseEntity<List<Task>> getTasksByDate(@RequestBody String dateString) {
         try {
+            dateString = dateString.replace("\"", "");
             List<Task> tasks = new ArrayList<>(taskRepository.findByDateWithTypesSorted(dateString + " 00:00:00", dateString + " 23:59:59"));
             if (tasks.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -158,7 +159,7 @@ public class Controller {
      * @param typeName id типа
      * @return обновленная задача
      */
-    @PutMapping("/tasks/type/name/{id}")
+    /*@PutMapping("/tasks/type/name/{id}")
     public ResponseEntity<Task> updateTaskTypeByName(@PathVariable("id") int id, @RequestBody String typeName) {
         Optional<Task> taskData = taskRepository.findById(id);
         TaskType type1 = taskTypeRepository.getByName(typeName.substring(1, typeName.length() - 1));
@@ -170,7 +171,7 @@ public class Controller {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-    }
+    }*/
 
     /**
      * удаляет задачу по ее id
@@ -212,7 +213,6 @@ public class Controller {
     @GetMapping("/tags")
     public ResponseEntity<List<Tag>> getAllTags() {
         try {
-            //List<Tag> tags = new ArrayList<>(tagRepository.findAllSorted().stream().distinct().collect(Collectors.toList()));
             List<Tag> tags = new ArrayList<>(tagRepository.findAll());
             if (tags.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -231,7 +231,10 @@ public class Controller {
     @GetMapping("/tags/tasks")
     public ResponseEntity<List<Tag>> getTagsWithTasks() {
         try {
-            List<Tag> tags = new ArrayList<>(tagRepository.findAllWithTasksSorted().stream().distinct().collect(Collectors.toList()));
+            List<Tag> tags = new ArrayList<>(tagRepository.findAll().stream()
+                    .distinct()
+                    .filter(tag -> (!tag.getTasks().isEmpty()))
+                    .collect(Collectors.toList()));
             if (tags.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
