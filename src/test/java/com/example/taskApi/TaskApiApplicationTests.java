@@ -356,6 +356,97 @@ class TaskApiApplicationTests {
                 .andDo(print());
     }
 
+    /**
+     * тестирует успешное обновление тега по его id
+     *
+     * @throws Exception
+     */
+    @Test
+    void testSuccessUpdateTagById() throws Exception {
+        int id = 0;
+        Tag tag = new Tag("тег");
+        Tag tagUpdated = new Tag("тег1");
+        when(tagRepository.findById(id)).thenReturn(Optional.of(tag));
+        when(tagRepository.save(any(Tag.class))).thenReturn(tagUpdated);
+        mockMvc.perform(put("/api/tags/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(tagUpdated)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(tagUpdated.getName()))
+                .andDo(print());
+    }
+
+    /**
+     * тестирует успешное добавление задачи для тега по его id и id задачи
+     *
+     * @throws Exception
+     */
+    @Test
+    void testSuccessAddTaskForTagById() throws Exception {
+        int id = 0;
+        int idTag = 1;
+        String nameTag = "тег";
+        Task task = new Task("имя", "описание", new Date());
+        task.setType(new TaskType());
+        task.setTag(new Tag());
+        Tag tag = new Tag();
+        tag.setName(nameTag);
+        tag.setId(idTag);
+        when(taskRepository.findById(id)).thenReturn(Optional.of(task));
+        when(tagRepository.findById(idTag)).thenReturn(Optional.of(tag));
+        tag.addTask(task);
+        when(tagRepository.save(any(Tag.class))).thenReturn(tag);
+        mockMvc.perform(put("/api/tags/task/{id}", idTag).contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(task.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasks[0].id").value(task.getId()))
+                .andExpect(jsonPath("$.tasks[0].name").value(task.getName()))
+                .andExpect(jsonPath("$.tasks[0].date").isNotEmpty())
+                .andDo(print());
+    }
+
+    /**
+     * тестирует успешное удаление задачи у тега по его id и id задачи
+     *
+     * @throws Exception
+     */
+    @Test
+    void testSuccessRemoveTaskFromTagById() throws Exception {
+        int id = 0;
+        int idTag = 1;
+        String nameTag = "тег";
+        Tag tag = new Tag();
+        tag.setName(nameTag);
+        tag.setId(idTag);
+        Task task = new Task("имя", "описание", new Date());
+        task.setType(new TaskType());
+        task.setTag(tag);
+
+        when(taskRepository.findById(id)).thenReturn(Optional.of(task));
+        when(tagRepository.findById(idTag)).thenReturn(Optional.of(tag));
+        tag.removeTask(task);
+        when(tagRepository.save(any(Tag.class))).thenReturn(tag);
+        mockMvc.perform(delete("/api/tags/task/{id}", idTag).contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(task.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasks.size()").value(tag.getTasks().size()))
+                .andDo(print());
+    }
+
+    /**
+     * тестирует успешное удаление тега по его id
+     *
+     * @throws Exception
+     */
+    @Test
+    void testSuccessDeleteTag() throws Exception {
+        int id = 0;
+        Tag tag = new Tag("тег");
+        doNothing().when(tagRepository).deleteById(id);
+        mockMvc.perform(delete("/api/tags/{id}", id))
+                .andExpect(status().isNoContent())
+                .andDo(print());
+    }
+
     public void fillTasks(List<Task> tasks) {
         for (int i = 0; i < 3; i++) {
             Task task = new Task("имя" + i, "описание" + i, new Date());
